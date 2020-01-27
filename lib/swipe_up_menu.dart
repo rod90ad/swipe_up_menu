@@ -31,18 +31,21 @@ class _SwipeUpMenuState extends State<SwipeUpMenu> with SingleTickerProviderStat
   int selectingIndex;
   double verticalLocation = 0;
   double horizontalLocation = 0;
-  double topStart;
-  double distanceBetween;
+  Offset startLocation;
   Size size;
+
   AnimationController animationController;
   Animation<double> menuAppear;
+
+  List<GlobalKey> keys;
+  List<Widget> widgets;
+  Size widgetSize;
 
   List<SwipeUpMenuItem> get items => widget.items;
   List<Widget> get body => widget.body;
 
   @override
   void initState(){
-    super.initState();
     animationController = AnimationController(vsync: this, duration: Duration(milliseconds: 500));
     animationController.addListener((){
       setState(() {});
@@ -50,13 +53,14 @@ class _SwipeUpMenuState extends State<SwipeUpMenu> with SingleTickerProviderStat
     currentIndex = widget.startIndex;
     selectingIndex = currentIndex; 
     menuAppear = Tween<double>(begin: 0.5, end: 0.03).animate(animationController);
+    keys = items.map((item) => GlobalKey()).toList();
+    super.initState();
   }
   
   @override
   Widget build(BuildContext context) {
     size = MediaQuery.of(context).size;
-    topStart = size.height - size.height*0.8;
-    distanceBetween = ((size.height - size.height*0.2) - topStart) / items.length;
+    widgets = keys.map((key) => _getItemMenuTile(items[keys.indexOf(key)])).toList();
     return SafeArea(
       child: GestureDetector(
         child: Stack(
@@ -72,9 +76,7 @@ class _SwipeUpMenuState extends State<SwipeUpMenu> with SingleTickerProviderStat
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.end,
-                    children: items.map((item) {
-                      return _getItemMenuTile(item);
-                    }).toList(),
+                    children: widgets,
                   ),
                 ),
               ),
@@ -83,14 +85,11 @@ class _SwipeUpMenuState extends State<SwipeUpMenu> with SingleTickerProviderStat
         ),
         onVerticalDragStart: (details){
           if(details.globalPosition.dx > size.width * 0.85){
-            start=true;
-            animationController.forward();
-            verticalLocation = details.globalPosition.dy;
-            setState(() {});
+            startLocation = details.globalPosition;
           }
         },
         onVerticalDragUpdate: (details){
-          if(start){
+          if(start!=null && start){
             verticalLocation = details.globalPosition.dy;
             horizontalLocation = details.globalPosition.dx;
             if(horizontalLocation < size.width*0.8)
@@ -98,11 +97,17 @@ class _SwipeUpMenuState extends State<SwipeUpMenu> with SingleTickerProviderStat
             else
               locked = false;
             setState(() {});
+          }else if(startLocation!=null && (details.globalPosition.dy-startLocation.dy).abs() > size.height * 0.15){
+            start=true;
+            animationController.forward();
+            verticalLocation = details.globalPosition.dy;
+            setState(() {});
           }
         },
         onVerticalDragEnd: (details){
           if(start!=null && start){
             start=false;
+            startLocation = null;
             animationController.reverse();
             horizontalLocation=0;
             verticalLocation=0;
@@ -117,27 +122,18 @@ class _SwipeUpMenuState extends State<SwipeUpMenu> with SingleTickerProviderStat
     );
   }
 
-  double _getWidthByIndex(int index){
-    if(start!=null && start){
-      double iStart = (topStart + (index * distanceBetween));
-      double iEnd = (iStart + distanceBetween);
-      if(verticalLocation>=iStart && verticalLocation<=iEnd && !locked){
-        double mid = (distanceBetween/2);
-        double vStart = verticalLocation - iStart;
-        if(vStart > mid){
-          return 30 * (mid/vStart);
-        }else{
-          return 30 * (vStart/mid);
-        }
-      }
-    }
-    return 0;
+  Offset _getObjectPositionByIndex(int index){
+    final RenderBox box = keys[index].currentContext?.findRenderObject();
+    return box!= null ? box.localToGlobal(Offset.zero) : null;
   }
 
   double _getHorizontalPosition(int index){
     if(start!=null && start){
-      double iStart = (topStart + (index * distanceBetween));
-      double iEnd = (iStart + distanceBetween);
+      Offset positon = _getObjectPositionByIndex(index);
+      if(size==null || positon==null)
+        return 0;
+      double iStart = positon.dy;
+      double iEnd = iStart + (size.height * 0.05);
       if(verticalLocation>=iStart && verticalLocation<=iEnd  && !locked){
         selectingIndex = index;
         double margin = (size.width - horizontalLocation) + size.width * 0.1;
@@ -148,7 +144,7 @@ class _SwipeUpMenuState extends State<SwipeUpMenu> with SingleTickerProviderStat
         margin = margin < (size.width/4) ? margin : (size.width/4);
         return margin;
       }else{
-        double margin = 10.0 * (items.length - ((index - selectingIndex).abs() * 1));
+        double margin = 8.0 * (items.length - ((index - selectingIndex).abs() * 1));
         return margin < 0 ? 0 : margin;
       }
     }
@@ -158,6 +154,7 @@ class _SwipeUpMenuState extends State<SwipeUpMenu> with SingleTickerProviderStat
   Widget _getItemMenuTile(SwipeUpMenuItem item){
     var index = items.indexOf(item);
     return Material(
+      key: keys[index],
       color: Colors.transparent,
       child: Container(
         width: (size.width * 0.35),
@@ -175,58 +172,28 @@ class _SwipeUpMenuState extends State<SwipeUpMenu> with SingleTickerProviderStat
           children: <Widget>[
             Row(
               children: <Widget>[
-                item.icon!=null ? Icon(item.icon, color: Colors.white) : Container(),
-                item.icon!=null ? SizedBox(width: 6) : Container(),
+                item.icon!=null ? item.icon : Container(),
                 Expanded(
-                  child: Text("${item.title}", style: TextStyle(fontSize: 20, color: Colors.white), textAlign: TextAlign.center),
+                  child: Center(child: item.title),
                 )
               ],
             ),
-            Positioned(
-              left: (item.icon!=null ? -10 : -8),
-              top: (item.icon!=null ? -13 : -5),
-              child: Container(
-                width: size.width * 0.04,
-                height: size.width * 0.04,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.red
-                ),
-                child: Text("$item.notification", style: TextStyle(color: Colors.white)),
-              ),
-            )
           ],
         ),
       ),
     );
   }
-
-  double _getHeightByIndex(int index){
-    double iStart = (topStart + (index * distanceBetween));
-    double iEnd = (iStart + distanceBetween);
-    if(verticalLocation>=iStart && verticalLocation<=iEnd && (!locked || selectingIndex==index)){
-      double mid = (distanceBetween/2);
-      double vStart = verticalLocation - iStart;
-      if(vStart > mid){
-        return 10 * (mid/vStart);
-      }else{
-        return 10 * (vStart/mid);
-      }
-    }
-    return distanceBetween * 0.1;
-  }
 }
 
 class SwipeUpMenuItem{
 
-  final String title;
+  final Text title;
   final Color backgroundColor;
-  final IconData icon;
+  final Icon icon;
 
   SwipeUpMenuItem({
     @required this.title,
     this.icon,
     this.backgroundColor = Colors.white,
-  }) : assert(title.isNotEmpty && title!=null);
+  }) : assert(title!=null);
 }
