@@ -2,6 +2,7 @@
 [![Pub](https://img.shields.io/pub/v/swipe_up_menu.svg)](https://pub.dev/packages/swipe_up_menu)
 [![Pull Requests are welcome](https://img.shields.io/badge/license-MIT-blue)](https://github.com/rod90ad/swipe_up_menu/blob/master/LICENSE)
 [![Pull Requests are welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)](https://github.com/rod90ad/swipe_up_menu/pulls)
+[![Codemagic build status](https://api.codemagic.io/apps/5e2ef0fa151bb635435f124a/5e2ef0fa151bb635435f1249/status_badge.svg)](https://codemagic.io/apps/5e2ef0fa151bb635435f124a/5e2ef0fa151bb635435f1249/latest_build)
 
 A Flutter package to create a Swipe Menu who appears when slide on the right side of screen.
 
