@@ -21,7 +21,8 @@ SwipeUpMenu(
         SwipeUpMenuItem(title: Text("Menu 2"), icon: Icon(Icons.mail, color: Colors.white), backgroundColor: Colors.yellow),
     ],
     startIndex: 0,
-    onChange: (index){}
+    onChange: (index){},
+    animationDuration: Duration(milliseconds: 300)
 )
 ```
 
@@ -33,3 +34,4 @@ SwipeUpMenu(
 | `required` items | List<SwipeUpMenuItem> | The list of items to show in menu | -
 | startIndex | Integer | The start index of menus | `0`
 | onChange | Function | The function who return a index when it change | `null`
+| animationDuration | Duration | The duration of animation | `Duration(milliseconds:300)`

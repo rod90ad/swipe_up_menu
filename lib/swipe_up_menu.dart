@@ -7,6 +7,7 @@ class SwipeUpMenu extends StatefulWidget {
   final ValueChanged<int> onChange;
   final List<SwipeUpMenuItem> items;
   final int startIndex;
+  final Duration animationDuration;
 
   SwipeUpMenu({
     Key key,
@@ -14,6 +15,7 @@ class SwipeUpMenu extends StatefulWidget {
     @required this.items,
     this.onChange,
     this.startIndex = 0,
+    this.animationDuration,
   })  : assert(body != null && body.length == items.length),
         assert(items != null),
         super(key: key);
@@ -46,7 +48,7 @@ class _SwipeUpMenuState extends State<SwipeUpMenu>
   @override
   void initState() {
     animationController =
-        AnimationController(vsync: this, duration: Duration(milliseconds: 500));
+        AnimationController(vsync: this, duration: widget.animationDuration ?? Duration(milliseconds: 500));
     animationController.addListener(() {
       setState(() {});
     });

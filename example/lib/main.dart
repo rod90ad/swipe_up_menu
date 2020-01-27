@@ -31,6 +31,7 @@ class MyApp extends StatelessWidget {
         onChange: (index){
           print(index);
         },
+        animationDuration: Duration(milliseconds: 50),
       ),
     );
   }
