@@ -47,8 +47,9 @@ class _SwipeUpMenuState extends State<SwipeUpMenu>
 
   @override
   void initState() {
-    animationController =
-        AnimationController(vsync: this, duration: widget.animationDuration ?? Duration(milliseconds: 500));
+    animationController = AnimationController(
+        vsync: this,
+        duration: widget.animationDuration ?? Duration(milliseconds: 500));
     animationController.addListener(() {
       setState(() {});
     });
