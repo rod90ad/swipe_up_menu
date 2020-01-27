@@ -1,4 +1,4 @@
-package com.example.swipe_up_menu
+package com.example.example
 
 import androidx.annotation.NonNull;
 import io.flutter.embedding.android.FlutterActivity

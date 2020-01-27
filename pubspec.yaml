@@ -1,6 +1,7 @@
 name: swipe_up_menu
-description: A new Flutter project.
-version: 1.0.0+1
+description: A side menu who appears when you swipe up or down in side of the screen to full screen apps.
+homepage: https://github.com/rod90ad/swipe_up_menu
+version: 0.1.0
 
 environment:
   sdk: ">=2.1.0 <3.0.0"
@@ -15,4 +16,3 @@ dev_dependencies:
   build_runner:
 
 flutter:
-  uses-material-design: true
