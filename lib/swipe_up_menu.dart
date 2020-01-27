@@ -15,7 +15,6 @@ class SwipeUpMenu extends StatefulWidget {
     this.onChange,
     this.startIndex = 0,
   })  : assert(body != null && body.length == items.length),
-        assert(onChange != null),
         assert(items != null),
         super(key: key);
 
@@ -92,8 +91,7 @@ class _SwipeUpMenuState extends State<SwipeUpMenu>
       horizontalLocation = 0;
       verticalLocation = 0;
       if (locked) {
-        if(widget.onChange!=null)
-          widget.onChange(selectingIndex);
+        if (widget.onChange != null) widget.onChange(selectingIndex);
         currentIndex = selectingIndex;
       }
       setState(() {});
