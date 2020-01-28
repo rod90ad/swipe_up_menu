@@ -1,5 +1,6 @@
 library swipe_up_menu;
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 class SwipeUpMenu extends StatefulWidget {
@@ -22,26 +23,24 @@ class SwipeUpMenu extends StatefulWidget {
         assert(items != null),
         super(key: key);
 
-  static SwipeUpMenuState of(BuildContext context, { bool nullOk = false }) {
+  static SwipeUpMenuState of(BuildContext context, {bool nullOk = false}) {
     assert(context != null);
     assert(nullOk != null);
-    final SwipeUpMenuState query = context.findAncestorStateOfType<SwipeUpMenuState>();
-    if (query != null)
-      return query;
-    if (nullOk)
-      return null;
+    final SwipeUpMenuState query =
+        context.findAncestorStateOfType<SwipeUpMenuState>();
+    if (query != null) return query;
+    if (nullOk) return null;
     throw FlutterError.fromParts(<DiagnosticsNode>[
-      ErrorSummary('SwipeUpMenuState.of() called with a context that does not contain a SwipeUpMenuState.'),
+      ErrorSummary(
+          'SwipeUpMenuState.of() called with a context that does not contain a SwipeUpMenuState.'),
       ErrorDescription(
-        'No SwipeUpMenuState ancestor could be found starting from the context that was passed '
-        'to SwipeUpMenuState.of(). This can happen because you do not have a WidgetsApp or '
-        'MaterialApp widget (those widgets introduce a SwipeUpMenuState), or it can happen '
-        'if the context you use comes from a widget above those widgets.'
-      ),
+          'No SwipeUpMenuState ancestor could be found starting from the context that was passed '
+          'to SwipeUpMenuState.of(). This can happen because you do not have a WidgetsApp or '
+          'MaterialApp widget (those widgets introduce a SwipeUpMenuState), or it can happen '
+          'if the context you use comes from a widget above those widgets.'),
       context.describeElement('The context used was')
     ]);
   }
-  
 
   @override
   SwipeUpMenuState createState() => SwipeUpMenuState();
@@ -57,8 +56,6 @@ class SwipeUpMenuState extends State<SwipeUpMenu>
   double horizontalLocation = 0;
   Offset startLocation;
   Size size;
-
-  bool scrollPhysics = true;
 
   AnimationController animationController;
   Animation<double> menuAppear;
@@ -86,55 +83,52 @@ class SwipeUpMenuState extends State<SwipeUpMenu>
     super.initState();
   }
 
-  bool notificationListener(Notification notification){
-    if(notification is ScrollStartNotification){
-      _onVerticalDragStart(notification.dragDetails);
-      return false;
-    }else if(notification is ScrollUpdateNotification){
-      _onVerticalDragUpdate(notification.dragDetails);
-      return false;
-    }else if(notification is ScrollEndNotification){
-      _onVerticalDragEnd(notification.dragDetails);
-      return false;
+  bool _notificationListener(Notification notification) {
+    if (notification is UserScrollNotification) return true;
+    if (notification is ScrollStartNotification)
+      return _onVerticalDragStart(notification.dragDetails ?? null);
+    if (notification is ScrollUpdateNotification)
+      return _onVerticalDragUpdate(notification.dragDetails ?? null);
+    if (notification is OverscrollNotification)
+      return _onVerticalDragUpdate(notification.dragDetails ?? null);
+    if (notification is ScrollEndNotification)
+      return _onVerticalDragEnd(notification.dragDetails ?? null);
+    return true;
+  }
+
+  bool _onVerticalDragStart(DragStartDetails details) {
+    if (details == null) return true;
+    if (details.globalPosition.dx > size.width * 0.85) {
+      startLocation = details.globalPosition;
+      setState(() {});
     }
     return true;
   }
 
-  void _onVerticalDragStart(DragStartDetails details) {
-    if (details.globalPosition.dx > size.width * 0.85) {
-      startLocation = details.globalPosition;
-      this.scrollPhysics=false;
-      setState(() {});
-    }else{
-      this.scrollPhysics = true;
-      setState(() {});
-    }
-  }
-
-  void _onVerticalDragUpdate(DragUpdateDetails details) {
+  bool _onVerticalDragUpdate(DragUpdateDetails details) {
+    if (details == null) return true;
     if (start != null && start) {
       verticalLocation = details.globalPosition.dy;
-      horizontalLocation = details.globalPosition.dx;
-      if (horizontalLocation < size.width * 0.8)
+      horizontalLocation = details.globalPosition?.dx;
+      if (horizontalLocation < (size.width * 0.8).abs())
         locked = true;
       else
         locked = false;
       setState(() {});
     } else if (startLocation != null &&
         (details.globalPosition.dy - startLocation.dy).abs() >
-            size.height * 0.15) {
+            (size.height * 0.15).abs()) {
       start = true;
-      scrollPhysics=false;
       animationController.forward();
       verticalLocation = details.globalPosition.dy;
       setState(() {});
     }
+    return true;
   }
 
-  void _onVerticalDragEnd(DragEndDetails details) {
+  bool _onVerticalDragEnd(DragEndDetails details) {
     if (start != null && start) {
       start = false;
-      scrollPhysics = false;
       startLocation = null;
       animationController.reverse();
       horizontalLocation = 0;
@@ -144,10 +138,8 @@ class SwipeUpMenuState extends State<SwipeUpMenu>
         currentIndex = selectingIndex;
       }
       setState(() {});
-    }else{
-      scrollPhysics=true;
-      setState(() {});
     }
+    return true;
   }
 
   @override
@@ -156,11 +148,13 @@ class SwipeUpMenuState extends State<SwipeUpMenu>
     widgets =
         keys.map((key) => _getItemMenuTile(items[keys.indexOf(key)])).toList();
     return GestureDetector(
-      behavior: HitTestBehavior.translucent,
       child: Stack(
         overflow: Overflow.clip,
         children: <Widget>[
-          body[currentIndex],
+          NotificationListener(
+            onNotification: _notificationListener,
+            child: body[currentIndex],
+          ),
           Positioned(
             left: size.width * menuAppear.value,
             child: IgnorePointer(
@@ -180,6 +174,9 @@ class SwipeUpMenuState extends State<SwipeUpMenu>
       onVerticalDragStart: _onVerticalDragStart,
       onVerticalDragUpdate: _onVerticalDragUpdate,
       onVerticalDragEnd: _onVerticalDragEnd,
+      onHorizontalDragStart: (details) {
+        print(details.globalPosition);
+      },
     );
   }
 

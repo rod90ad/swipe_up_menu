@@ -34,4 +34,4 @@ SwipeUpMenu(
 | `required` items | List<SwipeUpMenuItem> | The list of items to show in menu | -
 | startIndex | Integer | The start index of menus | `0`
 | onChange | Function | The function who return a index when it change | `null`
-| animationDuration | Duration | The duration of animation | `Duration(milliseconds:300)`
+| animationDuration | Duration | The duration of animation | `Duration(milliseconds:500)`
