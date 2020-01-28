@@ -22,7 +22,7 @@ SwipeUpMenu(
     ],
     startIndex: 0,
     onChange: (index){},
-    animationDuration: Duration(milliseconds: 300)
+    animationDuration: Duration(milliseconds: 500)
 )
 ```
 

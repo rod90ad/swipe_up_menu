@@ -8,23 +8,46 @@ class SwipeUpMenu extends StatefulWidget {
   final List<SwipeUpMenuItem> items;
   final int startIndex;
   final Duration animationDuration;
+  final ValueChanged<bool> canScroll;
 
   SwipeUpMenu({
     Key key,
     @required this.body,
     @required this.items,
     this.onChange,
+    this.canScroll,
     this.startIndex = 0,
     this.animationDuration,
   })  : assert(body != null && body.length == items.length),
         assert(items != null),
         super(key: key);
 
+  static SwipeUpMenuState of(BuildContext context, { bool nullOk = false }) {
+    assert(context != null);
+    assert(nullOk != null);
+    final SwipeUpMenuState query = context.findAncestorStateOfType<SwipeUpMenuState>();
+    if (query != null)
+      return query;
+    if (nullOk)
+      return null;
+    throw FlutterError.fromParts(<DiagnosticsNode>[
+      ErrorSummary('SwipeUpMenuState.of() called with a context that does not contain a SwipeUpMenuState.'),
+      ErrorDescription(
+        'No SwipeUpMenuState ancestor could be found starting from the context that was passed '
+        'to SwipeUpMenuState.of(). This can happen because you do not have a WidgetsApp or '
+        'MaterialApp widget (those widgets introduce a SwipeUpMenuState), or it can happen '
+        'if the context you use comes from a widget above those widgets.'
+      ),
+      context.describeElement('The context used was')
+    ]);
+  }
+  
+
   @override
-  _SwipeUpMenuState createState() => _SwipeUpMenuState();
+  SwipeUpMenuState createState() => SwipeUpMenuState();
 }
 
-class _SwipeUpMenuState extends State<SwipeUpMenu>
+class SwipeUpMenuState extends State<SwipeUpMenu>
     with SingleTickerProviderStateMixin {
   bool start;
   bool locked;
@@ -34,6 +57,8 @@ class _SwipeUpMenuState extends State<SwipeUpMenu>
   double horizontalLocation = 0;
   Offset startLocation;
   Size size;
+
+  bool scrollPhysics = true;
 
   AnimationController animationController;
   Animation<double> menuAppear;
@@ -61,9 +86,28 @@ class _SwipeUpMenuState extends State<SwipeUpMenu>
     super.initState();
   }
 
+  bool notificationListener(Notification notification){
+    if(notification is ScrollStartNotification){
+      _onVerticalDragStart(notification.dragDetails);
+      return false;
+    }else if(notification is ScrollUpdateNotification){
+      _onVerticalDragUpdate(notification.dragDetails);
+      return false;
+    }else if(notification is ScrollEndNotification){
+      _onVerticalDragEnd(notification.dragDetails);
+      return false;
+    }
+    return true;
+  }
+
   void _onVerticalDragStart(DragStartDetails details) {
     if (details.globalPosition.dx > size.width * 0.85) {
       startLocation = details.globalPosition;
+      this.scrollPhysics=false;
+      setState(() {});
+    }else{
+      this.scrollPhysics = true;
+      setState(() {});
     }
   }
 
@@ -80,6 +124,7 @@ class _SwipeUpMenuState extends State<SwipeUpMenu>
         (details.globalPosition.dy - startLocation.dy).abs() >
             size.height * 0.15) {
       start = true;
+      scrollPhysics=false;
       animationController.forward();
       verticalLocation = details.globalPosition.dy;
       setState(() {});
@@ -89,6 +134,7 @@ class _SwipeUpMenuState extends State<SwipeUpMenu>
   void _onVerticalDragEnd(DragEndDetails details) {
     if (start != null && start) {
       start = false;
+      scrollPhysics = false;
       startLocation = null;
       animationController.reverse();
       horizontalLocation = 0;
@@ -97,6 +143,9 @@ class _SwipeUpMenuState extends State<SwipeUpMenu>
         if (widget.onChange != null) widget.onChange(selectingIndex);
         currentIndex = selectingIndex;
       }
+      setState(() {});
+    }else{
+      scrollPhysics=true;
       setState(() {});
     }
   }
@@ -107,6 +156,7 @@ class _SwipeUpMenuState extends State<SwipeUpMenu>
     widgets =
         keys.map((key) => _getItemMenuTile(items[keys.indexOf(key)])).toList();
     return GestureDetector(
+      behavior: HitTestBehavior.translucent,
       child: Stack(
         overflow: Overflow.clip,
         children: <Widget>[
